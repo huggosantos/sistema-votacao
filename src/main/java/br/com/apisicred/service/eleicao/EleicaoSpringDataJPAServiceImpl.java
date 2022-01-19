@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import br.com.apisicred.controller.eleicao.dto.EleicaoDto;
+import br.com.apisicred.exception.BussinesExceptionBadRequest;
 import br.com.apisicred.exception.BussinesExceptionNotFound;
 import br.com.apisicred.model.Eleicao;
 import br.com.apisicred.model.Pauta;
@@ -26,15 +27,27 @@ public class EleicaoSpringDataJPAServiceImpl implements EleicaoService {
 
 	@Override
 	@Transactional
-	public void iniciarVotacao(EleicaoDto eleicaoDto) throws BussinesExceptionNotFound{
+	public void iniciarVotacao(EleicaoDto eleicaoDto) throws BussinesExceptionNotFound, BussinesExceptionBadRequest {
 		Pauta pauta = getPautaById(eleicaoDto.getIdPauta());
-		Eleicao eleicao = Eleicao.builder().dataAbertura(LocalDateTime.now()).dataFechamento(eleicaoDto.getDataLimite())
-				.pauta(pauta).build();
+
+		if (findByPauta(pauta).isPresent()) {
+			throw new BussinesExceptionBadRequest("Ja existe uma eleição para essa pauta.");
+		}
+
+		Eleicao eleicao;
+		if (eleicaoDto.getDataLimite() == null) {
+			eleicao = Eleicao.builder().dataAbertura(LocalDateTime.now())
+					.dataFechamento(LocalDateTime.now().plusMinutes(1)).pauta(pauta).build();
+		} else {
+			eleicao = Eleicao.builder().dataAbertura(LocalDateTime.now()).dataFechamento(eleicaoDto.getDataLimite())
+					.pauta(pauta).build();
+		}
+
 		this.save(eleicao);
 	}
 
 	private Pauta getPautaById(Integer idPauta) {
-			return pautaService.findById(idPauta);
+		return pautaService.findById(idPauta);
 	}
 
 	@Override
