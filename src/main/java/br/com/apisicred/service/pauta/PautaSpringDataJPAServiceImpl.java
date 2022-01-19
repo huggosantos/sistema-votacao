@@ -1,6 +1,10 @@
 package br.com.apisicred.service.pauta;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -9,6 +13,8 @@ import org.springframework.stereotype.Service;
 import br.com.apisicred.exception.BusinessException;
 import br.com.apisicred.exception.BussinesExceptionNotFound;
 import br.com.apisicred.model.Pauta;
+import br.com.apisicred.model.Voto;
+import br.com.apisicred.repository.EleicaoRepository;
 import br.com.apisicred.repository.PautaRepository;
 import lombok.RequiredArgsConstructor;
 
@@ -19,11 +25,14 @@ public class PautaSpringDataJPAServiceImpl implements PautaService {
 	@Autowired
 	private PautaRepository pautaRepository;
 
+	@Autowired
+	private EleicaoRepository eleicaoRepository;
+
 	@Override
 	public List<Pauta> findAll() throws BussinesExceptionNotFound {
 		List<Pauta> listaPautas = pautaRepository.findAll();
-		if(listaPautas.isEmpty()) {
-			throw new  BussinesExceptionNotFound("Não existe pautas");
+		if (listaPautas.isEmpty()) {
+			throw new BussinesExceptionNotFound("Não existe pautas");
 		}
 		return listaPautas;
 	}
@@ -59,6 +68,20 @@ public class PautaSpringDataJPAServiceImpl implements PautaService {
 		} catch (DataIntegrityViolationException e) {
 			throw new DataIntegrityViolationException("Não é possível excluir a pauta");
 		}
+	}
+
+	@Override
+	public Map<String, Long> resultadoEleicao(Pauta pauta) {
+
+		Collection<Voto> votos = eleicaoRepository.findByPauta(pauta).isPresent()
+				? eleicaoRepository.findByPauta(pauta).get().getVotos()
+				: new ArrayList<>();
+
+		Map<String, Long> result = new HashMap<>();
+		result.put("SIM", votos.stream().filter(v -> v.getTipoVoto().toString().equalsIgnoreCase("SIM")).count());
+		result.put("NAO", votos.stream().filter(v -> v.getTipoVoto().toString().equalsIgnoreCase("NAO")).count());
+
+		return result;
 	}
 
 }
