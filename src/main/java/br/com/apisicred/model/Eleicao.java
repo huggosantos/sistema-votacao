@@ -1,17 +1,20 @@
 package br.com.apisicred.model;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
+import java.util.LinkedHashSet;
 
-import javax.persistence.Column;
+import javax.persistence.CascadeType;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
+import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
-import javax.validation.constraints.NotEmpty;
 
-import com.sun.istack.NotNull;
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -36,14 +39,13 @@ public class Eleicao {
 
 	private LocalDateTime dataAbertura;
 
+	@JsonFormat(shape=JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss[.SSS][.SS][.S]")
 	private LocalDateTime dataFechamento;
 
 	@OneToOne
 	@JoinColumn(name = "idPauta")
 	private Pauta pauta;
 
-	@NotNull
-	@NotEmpty
-	private String voto;
-
+	@OneToMany(fetch = FetchType.EAGER, mappedBy = "eleicao", cascade = CascadeType.ALL)
+	private Collection<Voto> votos = new LinkedHashSet<Voto>();
 }
