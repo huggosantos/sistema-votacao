@@ -1,6 +1,7 @@
 package br.com.apisicred.exception;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -13,5 +14,5 @@ public class StandardError implements Serializable{
     
     private Integer status;
     private String msg;
-    private Long timeStamp;
+    private LocalDateTime timeStamp;
 }

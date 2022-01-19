@@ -1,7 +1,6 @@
 package br.com.apisicred.service.voto;
 
 import java.time.LocalDateTime;
-import java.util.Optional;
 
 import javax.transaction.Transactional;
 
@@ -10,6 +9,8 @@ import org.springframework.stereotype.Service;
 
 import br.com.apisicred.exception.BussinesExceptionBadRequest;
 import br.com.apisicred.exception.BussinesExceptionNotFound;
+import br.com.apisicred.gatway.validadorCpfGatway;
+import br.com.apisicred.gatway.dto.ResponseValidador;
 import br.com.apisicred.model.Eleicao;
 import br.com.apisicred.model.Pauta;
 import br.com.apisicred.model.Voto;
@@ -29,6 +30,9 @@ public class VotoSpringDataJPAServiceImpl implements VotoService {
 	@Autowired
 	private VotoRepository votoRepository;
 
+	@Autowired
+	private validadorCpfGatway validadorCpfGatway;
+
 	@Override
 	@Transactional
 	public void votar(Integer idPauta, Voto voto) throws BussinesExceptionNotFound, BussinesExceptionBadRequest {
@@ -38,6 +42,12 @@ public class VotoSpringDataJPAServiceImpl implements VotoService {
 
 		if (LocalDateTime.now().isAfter(eleicao.getDataFechamento())) {
 			throw new BussinesExceptionBadRequest("A Eleição ja está encerrada");
+		}
+
+		ResponseValidador status = validadorCpfGatway.validadarCpf(voto.getCpfAssociado());
+		if (status.getStatus().equalsIgnoreCase("UNABLE_TO_VOTE")) {
+			throw new BussinesExceptionBadRequest(
+					"O CPF -> " + voto.getCpfAssociado() + " não é valido. Retorno do serviço validador -> " + status.getStatus());
 		}
 
 		String x = votoRepository.verificaAssociado(eleicao.getIdEleicao(), voto.getCpfAssociado());
